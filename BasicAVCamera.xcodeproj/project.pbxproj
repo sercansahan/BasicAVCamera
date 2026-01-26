@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7A19A93F2F27F9F500A26443 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A19A93E2F27F9F200A26443 /* MainView.swift */; };
 		984125E92BF9804000553F53 /* BasicAVCameraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984125E82BF9804000553F53 /* BasicAVCameraApp.swift */; };
 		984125ED2BF9804200553F53 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 984125EC2BF9804200553F53 /* Assets.xcassets */; };
 		984125F02BF9804200553F53 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 984125EF2BF9804200553F53 /* Preview Assets.xcassets */; };
@@ -15,14 +16,11 @@
 		984126182BF9826A00553F53 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984126142BF9826A00553F53 /* CameraManager.swift */; };
 		984126192BF9826A00553F53 /* PhotoLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984126152BF9826A00553F53 /* PhotoLibraryManager.swift */; };
 		984126202BF9832000553F53 /* SaveImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9841261F2BF9832000553F53 /* SaveImageView.swift */; };
-		984126222BF9835F00553F53 /* ImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984126212BF9835F00553F53 /* ImageView.swift */; };
-		984126242BF9838900553F53 /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984126232BF9838900553F53 /* PreviewView.swift */; };
 		984126262BF9855A00553F53 /* SaveVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984126252BF9855A00553F53 /* SaveVideoView.swift */; };
-		984126282BF9863500553F53 /* PhotoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984126272BF9863500553F53 /* PhotoData.swift */; };
-		9841262D2BF9A89900553F53 /* CameraMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9841262C2BF9A89900553F53 /* CameraMode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7A19A93E2F27F9F200A26443 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		984125E52BF9804000553F53 /* BasicAVCamera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BasicAVCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		984125E82BF9804000553F53 /* BasicAVCameraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicAVCameraApp.swift; sourceTree = "<group>"; };
 		984125EC2BF9804200553F53 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -32,11 +30,7 @@
 		984126142BF9826A00553F53 /* CameraManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
 		984126152BF9826A00553F53 /* PhotoLibraryManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoLibraryManager.swift; sourceTree = "<group>"; };
 		9841261F2BF9832000553F53 /* SaveImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveImageView.swift; sourceTree = "<group>"; };
-		984126212BF9835F00553F53 /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageView.swift; sourceTree = "<group>"; };
-		984126232BF9838900553F53 /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
 		984126252BF9855A00553F53 /* SaveVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveVideoView.swift; sourceTree = "<group>"; };
-		984126272BF9863500553F53 /* PhotoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoData.swift; sourceTree = "<group>"; };
-		9841262C2BF9A89900553F53 /* CameraMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraMode.swift; sourceTree = "<group>"; };
 		9841262E2BF9DA1C00553F53 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -103,9 +97,8 @@
 			children = (
 				984126132BF9826A00553F53 /* CameraView.swift */,
 				9841261F2BF9832000553F53 /* SaveImageView.swift */,
-				984126212BF9835F00553F53 /* ImageView.swift */,
-				984126232BF9838900553F53 /* PreviewView.swift */,
 				984126252BF9855A00553F53 /* SaveVideoView.swift */,
+				7A19A93E2F27F9F200A26443 /* MainView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -114,8 +107,6 @@
 			isa = PBXGroup;
 			children = (
 				984126122BF9826A00553F53 /* CameraModel.swift */,
-				984126272BF9863500553F53 /* PhotoData.swift */,
-				9841262C2BF9A89900553F53 /* CameraMode.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -191,15 +182,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				984125E92BF9804000553F53 /* BasicAVCameraApp.swift in Sources */,
-				984126242BF9838900553F53 /* PreviewView.swift in Sources */,
+				7A19A93F2F27F9F500A26443 /* MainView.swift in Sources */,
 				984126192BF9826A00553F53 /* PhotoLibraryManager.swift in Sources */,
 				984126162BF9826A00553F53 /* CameraModel.swift in Sources */,
 				984126172BF9826A00553F53 /* CameraView.swift in Sources */,
 				984126262BF9855A00553F53 /* SaveVideoView.swift in Sources */,
-				9841262D2BF9A89900553F53 /* CameraMode.swift in Sources */,
-				984126282BF9863500553F53 /* PhotoData.swift in Sources */,
 				984126182BF9826A00553F53 /* CameraManager.swift in Sources */,
-				984126222BF9835F00553F53 /* ImageView.swift in Sources */,
 				984126202BF9832000553F53 /* SaveImageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -334,7 +322,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BasicAVCamera/Preview Content\"";
-				DEVELOPMENT_TEAM = NLTYK5T6U3;
+				DEVELOPMENT_TEAM = JTSFH5Y3N3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Usage";
@@ -349,7 +337,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = itsuki.enjoy.BasicAVCamera;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sahansercan.BasicAVCameraTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -365,7 +353,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BasicAVCamera/Preview Content\"";
-				DEVELOPMENT_TEAM = NLTYK5T6U3;
+				DEVELOPMENT_TEAM = JTSFH5Y3N3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Usage";
@@ -380,7 +368,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = itsuki.enjoy.BasicAVCamera;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sahansercan.BasicAVCameraTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

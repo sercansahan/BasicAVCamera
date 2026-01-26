@@ -1,32 +1,34 @@
 //
-//  PreviewView.swift
+//  MainView.swift
 //  BasicAVCamera
 //
-//  Created by Itsuki on 2024/05/19.
+//  Created by Sercan Şahan on 26.01.2026.
 //
 
 import SwiftUI
 
-struct PreviewView: View {
-    @EnvironmentObject var model: CameraModel
+struct MainView: View {
+    @StateObject var model: CameraModel = CameraModel()
     @State private var isRecording: Bool = false
-
     private let footerHeight: CGFloat = 110.0
 
     var body: some View {
-        
-        ImageView(image: model.previewImage )
-            .padding(.bottom, footerHeight)
-            .overlay(alignment: .bottom) {
-                buttonsView()
-                    .frame(height: footerHeight)
-                    .background(.gray.opacity(0.4))
+        ZStack {
+            if let _ = model.photoData {
+                SaveImageView(model: model)
+            } else if let _ = model.movieFileUrl {
+                SaveVideoView(model: model)
+            } else {
+                CameraView(model: model)
+                    .overlay(alignment: .bottom) {
+                        buttonsView()
+                            .frame(height: footerHeight)
+                            .background(.gray.opacity(0.4))
+                    }
             }
-            .padding(.top, 40)
-            .background(Color.black)
-
+        }
     }
-
+    
     private func buttonsView() -> some View {
         GeometryReader { geometry in
             let frameHeight = geometry.size.height
@@ -44,6 +46,12 @@ struct PreviewView: View {
                 if model.cameraMode == .photo {
                     Button {
                         model.camera.takePhoto()
+                        model.onPhotoDataChange = { photoData in
+                            if let photoData {
+                                let data = self.resizePhotoData(photoData)
+                                print("Size: \((data?.count ?? 0) / 1024) KB")
+                            }
+                        }
                     } label: {
                         ZStack {
                             Circle()
@@ -90,15 +98,40 @@ struct PreviewView: View {
         .padding(.vertical, 24)
         .padding(.bottom, 8)
         .padding(.horizontal, 32)
+    }
+    
+    func resizePhotoData(_ photoData: PhotoData,
+                         maxDimension: CGFloat = 1200,
+                         compression: CGFloat = 0.6) -> Data? {
 
+        // Decode image from existing data (keeps orientation correct)
+        guard let uiImage = UIImage(data: photoData.imageData) else {
+            return nil
+        }
+
+        let originalSize = uiImage.size
+
+        let scale = min(
+            maxDimension / originalSize.width,
+            maxDimension / originalSize.height,
+            1 // never upscale
+        )
+
+        let newSize = CGSize(
+            width: originalSize.width * scale,
+            height: originalSize.height * scale
+        )
+
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        let resizedImage = renderer.image { _ in
+            uiImage.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+
+        // Re-encode as JPEG @ desired compression
+        return resizedImage.jpegData(compressionQuality: compression)
     }
 }
 
 #Preview {
-    @StateObject var model = CameraModel()
-//    model.photoToken = Image(systemName: "checkmark")
-
-//    CameraView()
-    return PreviewView()
-        .environmentObject(model)
+    MainView()
 }

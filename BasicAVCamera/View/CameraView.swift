@@ -1,25 +1,23 @@
 //
 //  CameraView.swift
-//  SwiftUIDemo2
+//  https://github.com/0Itsuki0/BasicAVCamera
 //
 //  Created by Itsuki on 2024/05/18.
 //
 
-
 import SwiftUI
 
 struct CameraView: View {
-    @StateObject private var model = CameraModel()
+    @StateObject var model: CameraModel
 
     var body: some View {
-
-        ZStack {
-            if let _ = model.photoToken {
-                SaveImageView()
-            } else if let _ = model.movieFileUrl {
-                SaveVideoView()
-            } else {
-                PreviewView()
+        GeometryReader { geometry in
+            if let image = model.previewImage {
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
+                    .clipped()
                     .onAppear {
                         model.camera.isPreviewPaused = false
                     }
@@ -27,7 +25,6 @@ struct CameraView: View {
                         model.camera.isPreviewPaused = true
                     }
             }
-
         }
         .task {
             await model.camera.start()
@@ -37,13 +34,6 @@ struct CameraView: View {
     }
 }
 
-
 #Preview {
-    @StateObject var model = CameraModel()
-//    model.photoToken = Image(systemName: "checkmark")
-
-//    CameraView()
-    return SaveImageView()
-        .environmentObject(model)
-
+    CameraView(model: CameraModel())
 }

@@ -8,7 +8,6 @@
 import Foundation
 import Photos
 
-
 class PhotoLibraryManager {
     
     private var assetCollection: PHAssetCollection?
@@ -26,7 +25,6 @@ class PhotoLibraryManager {
         let fetchOptions = PHFetchOptions()
         let collections = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: smartAlbumType, options: fetchOptions)
         self.assetCollection = collections.firstObject
-
     }
 
     private func checkAuthorization() async -> Bool {
@@ -51,7 +49,7 @@ class PhotoLibraryManager {
         }
     }
     
-    func savePhoto(imageData: Data) async {
+    func savePhoto(with imageData: Data) async {
         let isAuthorized = await checkAuthorization()
         if (!isAuthorized) {
             return
@@ -69,7 +67,6 @@ class PhotoLibraryManager {
         Task {
             do {
                 try await PHPhotoLibrary.shared().performChanges {
-                    
                     let creationRequest = PHAssetCreationRequest.forAsset()
                     if let assetPlaceholder = creationRequest.placeholderForCreatedAsset {
                         creationRequest.addResource(with: .photo, data: imageData, options: nil)
@@ -79,7 +76,6 @@ class PhotoLibraryManager {
                         }
                     }
                 }
-                    
                 print("Added image data to photo collection.")
             } catch let error {
                 print("Failed to add image to photo collection: \(error.localizedDescription)")
@@ -87,7 +83,7 @@ class PhotoLibraryManager {
         }
     }
     
-    func saveVideo(fileUrl: URL) async {
+    func saveVideo(from fileUrl: URL) async {
         let isAuthorized = await checkAuthorization()
         if (!isAuthorized) {
             return
@@ -105,7 +101,6 @@ class PhotoLibraryManager {
         Task {
             do {
                 try await PHPhotoLibrary.shared().performChanges {
-                    
                     let creationRequest = PHAssetCreationRequest.forAsset()
                     if let assetPlaceholder = creationRequest.placeholderForCreatedAsset {
                         creationRequest.addResource(with: .video, fileURL: fileUrl, options: nil)
@@ -115,7 +110,6 @@ class PhotoLibraryManager {
                         }
                     }
                 }
-                    
                 print("Added video to photo collection.")
             } catch let error {
                 print("Failed to add video to photo collection: \(error.localizedDescription)")

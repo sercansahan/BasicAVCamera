@@ -1,28 +1,60 @@
 //
 //  CameraModel.swift
-//  SwiftUIDemo2
+//  https://github.com/0Itsuki0/BasicAVCamera
 //
 //  Created by Itsuki on 2024/05/18.
 //
 
 import AVFoundation
+import Combine
 import SwiftUI
-import Photos
 
+enum CameraMode {
+    case video
+    case photo
+    
+    mutating func toggle() {
+        if self == .photo {
+            self = .video
+        } else {
+            self = .photo
+        }
+    }
+}
+
+struct PhotoData: Equatable {
+    static func == (lhs: PhotoData, rhs: PhotoData) -> Bool {
+        lhs.image == rhs.image &&
+        lhs.imageData == rhs.imageData &&
+        lhs.imageSize == rhs.imageSize
+    }
+    
+    var image: Image
+    var imageData: Data
+    var imageSize: (width: Int, height: Int)
+}
 
 class CameraModel: ObservableObject {
-    
     let camera = CameraManager()
     var photoLibraryManager: PhotoLibraryManager?
     
     @Published var cameraMode: CameraMode = .photo
     
     @Published var previewImage: Image?
-    @Published var photoToken: PhotoData?
-    @Published var movieFileUrl: URL?
-
+    @Published var photoData: PhotoData? {
+        didSet {
+            onPhotoDataChange?(photoData)
+        }
+    }
+    var onPhotoDataChange: ((PhotoData?) -> Void)? = nil
+    @Published var movieFileUrl: URL? {
+        didSet {
+            onMovieFileUrlChange?(movieFileUrl)
+        }
+    }
+    var onMovieFileUrlChange: ((URL?) -> Void)? = nil
     
-    init() {
+    init(onPhotoDataChange: ((PhotoData?) -> Void)? = nil, onMovieFileUrlChange: ((URL?) -> Void)? = nil) {
         Task {
             self.photoLibraryManager = await PhotoLibraryManager()
         }
@@ -38,10 +70,11 @@ class CameraModel: ObservableObject {
         Task {
             await handleCameraMovie()
         }
-
+        self.onPhotoDataChange = onPhotoDataChange
+        self.onMovieFileUrlChange = onMovieFileUrlChange
     }
     
-    // for preview camera output
+    // MARK: Preview Camera Output
     func handleCameraPreviews() async {
         let imageStream = camera.previewStream
             .map { $0.image }
@@ -53,19 +86,38 @@ class CameraModel: ObservableObject {
         }
     }
     
-    // for photo token
+    // MARK: Photo Taken
     func handleCameraPhotos() async {
-        let unpackedPhotoStream = camera.photoStream
-            .compactMap { self.unpackPhoto($0) }
+        let unpackedPhotoStream = camera.photoStream.compactMap { photo -> PhotoData? in
+            guard let imageData = photo.fileDataRepresentation(),
+                  let cgImage = photo.cgImageRepresentation(),
+                  let metadataOrientation = photo.metadata[String(kCGImagePropertyOrientation)] as? UInt32,
+                  let cgImageOrientation = CGImagePropertyOrientation(rawValue: metadataOrientation) else {
+                return nil
+            }
+            
+            let imageOrientation = UIImage.Orientation(cgImageOrientation)
+            let image = Image(uiImage: UIImage(cgImage: cgImage, scale: 1, orientation: imageOrientation))
+            
+            let photoDimensions = photo.resolvedSettings.photoDimensions
+            let imageSize = (width: Int(photoDimensions.width), height: Int(photoDimensions.height))
+
+            return PhotoData(image: image, imageData: imageData, imageSize: imageSize)
+        }
         
         for await photoData in unpackedPhotoStream {
             Task { @MainActor in
-                photoToken = photoData
+                self.photoData = photoData
             }
         }
     }
     
-    // for movie recorded
+    func savePhoto() async {
+        guard let imageData = photoData?.imageData else { return }
+        await photoLibraryManager?.savePhoto(with: imageData)
+    }
+    
+    // MARK: Video Recorded
     func handleCameraMovie() async {
         let fileUrlStream = camera.movieFileStream
         
@@ -76,24 +128,11 @@ class CameraModel: ObservableObject {
         }
     }
     
-
-    private func unpackPhoto(_ photo: AVCapturePhoto) -> PhotoData? {
-        guard let imageData = photo.fileDataRepresentation() else { return nil }
-        guard let cgImage = photo.cgImageRepresentation(),
-              let metadataOrientation = photo.metadata[String(kCGImagePropertyOrientation)] as? UInt32,
-              let cgImageOrientation = CGImagePropertyOrientation(rawValue: metadataOrientation) 
-        else { return nil }
-        
-        let imageOrientation = UIImage.Orientation(cgImageOrientation)
-        let image = Image(uiImage: UIImage(cgImage: cgImage, scale: 1, orientation: imageOrientation))
-        
-        let photoDimensions = photo.resolvedSettings.photoDimensions
-        let imageSize = (width: Int(photoDimensions.width), height: Int(photoDimensions.height))
-
-        return PhotoData(image: image, imageData: imageData, imageSize: imageSize)
+    func saveVideo() async {
+        guard let videoFileUrl = movieFileUrl else { return }
+        await photoLibraryManager?.saveVideo(from: videoFileUrl)
     }
 }
-
 
 fileprivate extension CIImage {
     var image: Image? {
@@ -103,9 +142,7 @@ fileprivate extension CIImage {
     }
 }
 
-
 fileprivate extension UIImage.Orientation {
-
     init(_ cgImageOrientation: CGImagePropertyOrientation) {
         switch cgImageOrientation {
         case .up: self = .up
