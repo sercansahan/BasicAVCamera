@@ -33,7 +33,3 @@ struct CameraView: View {
         .environmentObject(model)
     }
 }
-
-#Preview {
-    CameraView(model: CameraModel())
-}
