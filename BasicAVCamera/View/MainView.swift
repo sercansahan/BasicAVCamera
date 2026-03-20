@@ -8,20 +8,22 @@
 import SwiftUI
 
 struct MainView: View {
-    @StateObject var model: CameraModel = CameraModel()
+    @State var model: CameraModel = CameraModel(captureDevicePosition: .back)
     @State private var isRecording: Bool = false
+    @State private var capturedPhotoData: PhotoData?
+    @State private var capturedVideoUrl: URL?
 
     var body: some View {
         ZStack {
-            if let _ = model.photoData {
+            if let photoData = capturedPhotoData {
                 VStack {
                     topButtonsView()
-                    PhotoPreviewView(model: model)
+                    PhotoPreviewView(photoData: photoData)
                 }
-            } else if let _ = model.movieFileUrl {
+            } else if let videoFileUrl = capturedVideoUrl {
                 VStack {
                     topButtonsView()
-                    VideoPreviewView(model: model)
+                    VideoPreviewView(videoFileUrl: videoFileUrl)
                 }
             } else {
                 CameraView(model: model)
@@ -36,19 +38,21 @@ struct MainView: View {
     private func topButtonsView() -> some View {
         HStack {
             TopActionButton(.back) {
-                if model.photoData != nil {
-                    model.photoData = nil
-                } else if model.movieFileUrl != nil {
-                    model.movieFileUrl = nil
+                if capturedPhotoData != nil {
+                    capturedPhotoData = nil
+                } else if capturedVideoUrl != nil {
+                    capturedVideoUrl = nil
                 }
             }
             Spacer()
             TopActionButton(.save) {
                 Task {
-                    if model.photoData != nil {
+                    if capturedPhotoData != nil {
                         await model.savePhoto()
-                    } else if model.movieFileUrl != nil {
+                        capturedPhotoData = nil
+                    } else if capturedVideoUrl != nil {
                         await model.saveVideo()
+                        capturedVideoUrl = nil
                     }
                 }
             }
@@ -82,18 +86,20 @@ struct MainView: View {
         Button {
             if model.cameraMode == .photo {
                 model.onPhotoDataChange = { photoData in
-                    if let photoData {
-                        let data = self.resizePhotoData(photoData)
-                        print("Size: \((data?.count ?? 0) / 1024) KB")
-                    }
+                    capturedPhotoData = photoData
+                    let data = self.resizePhotoData(photoData)
+                    print("Size: \((data?.count ?? 0) / 1024) KB")
                 }
-                model.camera.takePhoto()
+                model.cameraManager.takePhoto()
             } else {
                 isRecording.toggle()
                 if isRecording {
-                    model.camera.startRecordingVideo()
+                    model.onMovieFileUrlChange = { url in
+                        capturedVideoUrl = url
+                    }
+                    model.cameraManager.startRecordingVideo()
                 } else {
-                    model.camera.stopRecordingVideo()
+                    model.cameraManager.stopRecordingVideo()
                 }
             }
         } label: {
@@ -110,7 +116,7 @@ struct MainView: View {
     
     private func changeDeviceButton() -> some View {
         Button {
-            model.camera.switchCaptureDevice()
+            model.cameraManager.switchCaptureDevice()
         } label: {
             Image(systemName: "arrow.triangle.2.circlepath")
                 .font(.system(size: 18, weight: .semibold))

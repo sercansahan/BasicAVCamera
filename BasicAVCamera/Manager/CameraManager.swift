@@ -15,7 +15,12 @@ fileprivate enum RotationAngle: CGFloat {
     case landscapeLeft = 0
 }
 
-class CameraManager: NSObject {
+enum CaptureDevicePosition {
+    case front
+    case back
+}
+
+class CameraManager: NSObject, @unchecked Sendable {
     // MARK: Session Related
     private let captureSession = AVCaptureSession()
     
@@ -45,11 +50,11 @@ class CameraManager: NSObject {
     
     private var captureDevices: [AVCaptureDevice] {
         var devices = [AVCaptureDevice]()
-        if let frontDevice = frontCaptureDevices.first {
-            devices += [frontDevice]
-        }
         if let backDevice = backCaptureDevices.first {
             devices += [backDevice]
+        }
+        if let frontDevice = frontCaptureDevices.first {
+            devices += [frontDevice]
         }
         return devices
     }
@@ -84,12 +89,12 @@ class CameraManager: NSObject {
         return backCaptureDevices.contains(captureDevice)
     }
     
-    private var rotationAngle: RotationAngle = .portrait
+    private nonisolated(unsafe) var rotationAngle: RotationAngle = .portrait
     
     // MARK: Preview Device Output
-    var isPreviewPaused = false
+    nonisolated(unsafe) var isPreviewPaused = false
 
-    private var addToPreviewStream: ((CIImage) -> Void)?
+    private nonisolated(unsafe) var addToPreviewStream: ((CIImage) -> Void)?
     
     lazy var previewStream: AsyncStream<CIImage> = {
         AsyncStream { continuation in
@@ -102,7 +107,7 @@ class CameraManager: NSObject {
     }()
     
     // MARK: Taking Photo
-    private var addToPhotoStream: ((AVCapturePhoto) -> Void)?
+    private nonisolated(unsafe) var addToPhotoStream: ((AVCapturePhoto) -> Void)?
     
     lazy var photoStream: AsyncStream<AVCapturePhoto> = {
         AsyncStream { continuation in
@@ -113,7 +118,7 @@ class CameraManager: NSObject {
     }()
     
     // MARK: Recording Video File
-    private var addToMovieFileStream: ((URL) -> Void)?
+    private nonisolated(unsafe) var addToMovieFileStream: ((URL) -> Void)?
     
     lazy var movieFileStream: AsyncStream<URL> = {
         AsyncStream { continuation in
@@ -124,13 +129,18 @@ class CameraManager: NSObject {
     }()
     
     // MARK: - Lifecycle
-    override init() {
+    init(captureDevicePosition: CaptureDevicePosition) {
         super.init()
         // The value of this property is an AVCaptureSessionPreset indicating the current session preset in use by the receiver. The sessionPreset property may be set while the receiver is running.
         captureSession.sessionPreset = .low
         
         sessionQueue = DispatchQueue(label: "session queue")
-        captureDevice = availableCaptureDevices.first ?? AVCaptureDevice.default(for: .video)
+        switch captureDevicePosition {
+        case .front:
+            captureDevice = availableCaptureDevices.first(where: { $0.position == .front }) ?? AVCaptureDevice.default(for: .video)
+        case .back:
+            captureDevice = availableCaptureDevices.first(where: { $0.position == .back }) ?? AVCaptureDevice.default(for: .video)
+        }
     }
     
     private func checkAuthorization() async -> Bool {
@@ -256,6 +266,14 @@ class CameraManager: NSObject {
     }
     
     // MARK: Switch Between Devices
+    func switchCaptureDevicePosition() {
+        if isUsingFrontCaptureDevice {
+            captureDevice = availableCaptureDevices.first(where: { $0.position == .back }) ?? AVCaptureDevice.default(for: .video)
+        } else if isUsingBackCaptureDevice {
+            captureDevice = availableCaptureDevices.first(where: { $0.position == .front }) ?? AVCaptureDevice.default(for: .video)
+        }
+    }
+    
     func switchCaptureDevice() {
         if let captureDevice = captureDevice, let index = availableCaptureDevices.firstIndex(of: captureDevice) {
             let nextIndex = (index + 1) % availableCaptureDevices.count
@@ -368,7 +386,7 @@ class CameraManager: NSObject {
 
 
 extension CameraManager: AVCapturePhotoCaptureDelegate {
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+    nonisolated func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
             print("Error capturing photo: \(error.localizedDescription)")
             return
@@ -378,7 +396,7 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
 }
 
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    nonisolated func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
         connection.videoRotationAngle = self.rotationAngle.rawValue
         addToPreviewStream?(CIImage(cvPixelBuffer: pixelBuffer))
@@ -386,7 +404,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
 }
 
 extension CameraManager: AVCaptureFileOutputRecordingDelegate {
-    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+    nonisolated func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         if let error = error {
             print("Error capturing photo: \(error.localizedDescription)")
             return

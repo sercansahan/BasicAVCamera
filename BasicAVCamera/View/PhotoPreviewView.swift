@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct PhotoPreviewView: View {
-    @StateObject var model: CameraModel
+    @State var photoData: PhotoData
 
     var body: some View {
-        if let image = model.photoData?.image {
+        if let uiImage = UIImage(data: photoData.imageData) {
             GeometryReader { geometry in
-                image
+                Image(uiImage: uiImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)

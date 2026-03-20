@@ -10,6 +10,12 @@ import Photos
 
 class PhotoLibraryManager {
     
+    enum PhotoLibraryError: Error {
+        case notAuthorized
+        case assetCollectionNotFound
+        case saveFailed(Error)
+    }
+    
     private var assetCollection: PHAssetCollection?
     private var smartAlbumType: PHAssetCollectionSubtype = .smartAlbumUserLibrary
 
@@ -28,31 +34,58 @@ class PhotoLibraryManager {
     }
 
     private func checkAuthorization() async -> Bool {
-        switch PHPhotoLibrary.authorizationStatus(for: .readWrite) {
-        case .authorized:
-            print("Photo library access authorized.")
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        switch status {
+        case .authorized, .limited:
             return true
-        case .notDetermined:
-            print("Photo library access not determined.")
-            return await PHPhotoLibrary.requestAuthorization(for: .readWrite) == .authorized
-        case .denied:
-            print("Photo library access denied.")
-            return false
-        case .limited:
-            print("Photo library access limited.")
-            return false
-        case .restricted:
-            print("Photo library access restricted.")
+        case .notDetermined, .denied, .restricted:
             return false
         @unknown default:
             return false
         }
     }
     
-    func savePhoto(with imageData: Data) async {
+    func fetchAllPhotos() async throws -> [PHAsset] {
         let isAuthorized = await checkAuthorization()
         if (!isAuthorized) {
-            return
+            throw PhotoLibraryError.notAuthorized
+        }
+        
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [
+            NSSortDescriptor(key: "creationDate", ascending: false)
+        ]
+        
+        let result = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        
+        var assets: [PHAsset] = []
+        result.enumerateObjects { asset, _, _ in
+            assets.append(asset)
+        }
+        
+        return assets
+    }
+    
+    func fetchPhotos(withIdentifiers identifiers: [String]) async throws -> [PHAsset] {
+        let isAuthorized = await checkAuthorization()
+        if (!isAuthorized) {
+            throw PhotoLibraryError.notAuthorized
+        }
+        
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        
+        var assets: [PHAsset] = []
+        result.enumerateObjects { asset, _, _ in
+            assets.append(asset)
+        }
+        
+        return assets
+    }
+    
+    func savePhoto(with imageData: Data) async throws {
+        let isAuthorized = await checkAuthorization()
+        if (!isAuthorized) {
+            throw PhotoLibraryError.notAuthorized
         }
         
         if assetCollection == nil {
@@ -60,26 +93,23 @@ class PhotoLibraryManager {
         }
         
         guard let assetCollection = self.assetCollection else {
-            print("error saving image to photo")
-            return
+            throw PhotoLibraryError.assetCollectionNotFound
         }
         
-        Task {
-            do {
-                try await PHPhotoLibrary.shared().performChanges {
-                    let creationRequest = PHAssetCreationRequest.forAsset()
-                    if let assetPlaceholder = creationRequest.placeholderForCreatedAsset {
-                        creationRequest.addResource(with: .photo, data: imageData, options: nil)
-                        if let albumChangeRequest = PHAssetCollectionChangeRequest(for: assetCollection), assetCollection.canPerform(.addContent) {
-                            let fastEnumeration = NSArray(array: [assetPlaceholder])
-                            albumChangeRequest.addAssets(fastEnumeration)
-                        }
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                let creationRequest = PHAssetCreationRequest.forAsset()
+                if let assetPlaceholder = creationRequest.placeholderForCreatedAsset {
+                    creationRequest.addResource(with: .photo, data: imageData, options: nil)
+                    if let albumChangeRequest = PHAssetCollectionChangeRequest(for: assetCollection), assetCollection.canPerform(.addContent) {
+                        let fastEnumeration = NSArray(array: [assetPlaceholder])
+                        albumChangeRequest.addAssets(fastEnumeration)
                     }
                 }
-                print("Added image data to photo collection.")
-            } catch let error {
-                print("Failed to add image to photo collection: \(error.localizedDescription)")
             }
+            print("Added image data to photo collection.")
+        } catch {
+            throw PhotoLibraryError.saveFailed(error)
         }
     }
     

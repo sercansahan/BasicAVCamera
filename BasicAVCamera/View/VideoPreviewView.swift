@@ -9,22 +9,18 @@ import SwiftUI
 import AVKit
 
 struct VideoPreviewView: View {
-    @StateObject var model: CameraModel
+    @State var videoFileUrl: URL
 
     var body: some View {
-        if let url = model.movieFileUrl {
-            VideoPlayer(player: AVPlayer(url: url))
-                .background(Color.black)
-                .onAppear {
-                    print(url)
+        VideoPlayer(player: AVPlayer(url: videoFileUrl))
+            .background(Color.black)
+            .onAppear {
+                print(videoFileUrl)
+            }
+            .onDisappear {
+                Task {
+                    try? FileManager().removeItem(at: videoFileUrl)
                 }
-                .onDisappear {
-                    Task {
-                        try? FileManager().removeItem(at: url)
-                    }
-                }
-        } else {
-            Spacer()
-        }
+            }
     }
 }

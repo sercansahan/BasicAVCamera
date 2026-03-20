@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CameraView: View {
-    @StateObject var model: CameraModel
+    @Bindable var model: CameraModel
 
     var body: some View {
         GeometryReader { geometry in
@@ -19,17 +19,22 @@ struct CameraView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
                     .clipped()
                     .onAppear {
-                        model.camera.isPreviewPaused = false
+                        model.cameraManager.isPreviewPaused = false
                     }
                     .onDisappear {
-                        model.camera.isPreviewPaused = true
+                        model.cameraManager.isPreviewPaused = true
                     }
             }
         }
-        .task {
-            await model.camera.start()
+        .onAppear {
+            Task {
+                await model.cameraManager.start()
+            }
+        }
+        .onDisappear {
+            model.cameraManager.stop()
         }
         .ignoresSafeArea(.all)
-        .environmentObject(model)
+        .environment(model)
     }
 }
